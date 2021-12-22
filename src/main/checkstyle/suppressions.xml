@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+ "-//Checkstyle//DTD SuppressionFilter Configuration 1.0//EN"
+ "https://checkstyle.org/dtds/suppressions_1_0.dtd">
+<suppressions>
+    <suppress checks="AbbreviationAsWordInName" files="XMLDependency.java" lines="1-9999"/>
+    <suppress checks="AbbreviationAsWordInName" files="XMLParent.java" lines="1-9999"/>
+    <suppress checks="AbbreviationAsWordInName" files="XMLProject.java" lines="1-9999"/>
+</suppressions>
