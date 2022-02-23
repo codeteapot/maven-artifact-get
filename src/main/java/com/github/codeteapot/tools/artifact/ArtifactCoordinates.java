@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Stream.concat;
 
+import java.beans.ConstructorProperties;
 import java.io.Serializable;
 import java.util.stream.Stream;
 
@@ -20,24 +21,48 @@ public class ArtifactCoordinates implements Serializable {
   private final String version;
 
   /**
-   * Coordinates with given group, artifact identifier and version.
+   * Coordinates with given group identifier, artifact identifier and version.
    *
-   * @param groupId Group.
+   * @param groupId Group identifier.
    * @param artifactId Artifact identifier.
    * @param version Version.
    */
+  @ConstructorProperties({
+      "groupId",
+      "artifactId",
+      "version"
+  })
   public ArtifactCoordinates(String groupId, String artifactId, String version) {
     this.groupId = requireNonNull(groupId);
     this.artifactId = requireNonNull(artifactId);
     this.version = requireNonNull(version);
   }
 
-  String getPath(String extension) {
-    return concat(
-        Stream.of(groupId.split("\\.")),
-        Stream.of(artifactId, version, format("%s-%s.%s", artifactId, version, extension)))
-            .collect(joining("/", "/", ""));
+  /**
+   * Group identifier.
+   *
+   * @return The group identifier.
+   */
+  public String getGroupId() {
+    return groupId;
+  }
 
+  /**
+   * Artifact identifier.
+   *
+   * @return The artifact identifier.
+   */
+  public String getArtifactId() {
+    return artifactId;
+  }
+
+  /**
+   * Version.
+   *
+   * @return The version.
+   */
+  public String getVersion() {
+    return version;
   }
 
   /**
@@ -63,5 +88,13 @@ public class ArtifactCoordinates implements Serializable {
           && version.equals(coordinates.version);
     }
     return false;
+  }
+
+  String getPath(String extension) {
+    return concat(
+        Stream.of(groupId.split("\\.")),
+        Stream.of(artifactId, version, format("%s-%s.%s", artifactId, version, extension)))
+            .collect(joining("/", "/", ""));
+
   }
 }
