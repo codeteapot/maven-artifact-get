@@ -3,5 +3,5 @@
 
 # Maven Artifact Get Tool
 
-Visit [project site](https://codeteapot.github.io/maven-artifact-get/v0.1.2) to see full
+Visit [project site](https://codeteapot.github.io/maven-artifact-get/v0.2.0) to see full
 documentation.

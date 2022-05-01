@@ -1,6 +1,5 @@
 package com.github.codeteapot.tools.artifact;
 
-import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toMap;
 import static javax.xml.bind.JAXBContext.newInstance;
@@ -8,8 +7,8 @@ import static javax.xml.bind.JAXBContext.newInstance;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLStreamHandler;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,36 +32,15 @@ public class ArtifactRepository {
 
   private static final String DEFAULT_EXTENSION = "jar";
 
-  private static final String DEFAULT_PROTOCOL = "file";
-  private static final String DEFAULT_HOST = "";
-  private static final int DEFAULT_PORT = -1;
-
-  private final String protocol;
-  private final String host;
-  private final int port;
-  private final String path;
-  private final URLStreamHandler handler;
+  private final URL directory;
 
   /**
-   * With the given parameters to create the underlying {@link URL}.
+   * Repository at given directory URL.
    *
-   * @param protocol Protocol.
-   * @param host Host.
-   * @param port Port. Can be {@code null} for default.
-   * @param path Path.
-   * @param handler Handler. Can be {@code null} for default.
+   * @param directory Directory URL.
    */
-  public ArtifactRepository(
-      String protocol,
-      String host,
-      Integer port,
-      String path,
-      URLStreamHandler handler) {
-    this.protocol = ofNullable(protocol).orElse(DEFAULT_PROTOCOL);
-    this.host = ofNullable(host).orElse(DEFAULT_HOST);
-    this.port = ofNullable(port).orElse(DEFAULT_PORT);
-    this.path = requireNonNull(path);
-    this.handler = handler;
+  public ArtifactRepository(URL directory) {
+    this.directory = Objects.requireNonNull(directory);
   }
 
   /**
@@ -84,7 +62,7 @@ public class ArtifactRepository {
       return new Artifact(
           file(coordinates.getPath(project.getExtension(this::fromPackaging))),
           project.getDependencies());
-    } catch (JAXBException | MalformedURLException e) {
+    } catch (JAXBException | URISyntaxException | MalformedURLException e) {
       throw new ArtifactRepositoryException(e);
     } catch (UncheckedArtifactRepositoryException e) {
       throw e.getCause();
@@ -92,16 +70,15 @@ public class ArtifactRepository {
   }
 
   /**
-   * Hash based on {@code host}.
+   * Hash based on {@code directory}.
    */
   @Override
   public int hashCode() {
-    return host.hashCode();
+    return directory.hashCode();
   }
 
   /**
-   * Equality based on {@code protocol}, {@code host}, {@code port}, {@code path} and
-   * {@code handler}.
+   * Equality based on {@code directory}.
    */
   @Override
   public boolean equals(Object obj) {
@@ -110,11 +87,7 @@ public class ArtifactRepository {
     }
     if (obj instanceof ArtifactRepository) {
       ArtifactRepository repository = (ArtifactRepository) obj;
-      return protocol.equals(repository.protocol)
-          && host.equals(repository.host)
-          && port == repository.port
-          && path.equals(repository.path)
-          && Objects.equals(handler, repository.handler);
+      return directory.equals(repository.directory);
     }
     return false;
   }
@@ -123,13 +96,7 @@ public class ArtifactRepository {
     return ofNullable(packaging).map(EXTENSION_MAP::get).orElse(DEFAULT_EXTENSION);
   }
 
-  private URL file(String relativePath) throws MalformedURLException {
-    return handler == null
-        ? new URL(protocol, host, port, absoluteFile(relativePath))
-        : new URL(protocol, host, port, absoluteFile(relativePath), handler);
-  }
-
-  private String absoluteFile(String relativePath) {
-    return path.concat(relativePath);
+  private URL file(String relativePath) throws URISyntaxException, MalformedURLException {
+    return new URL(directory, relativePath);
   }
 }

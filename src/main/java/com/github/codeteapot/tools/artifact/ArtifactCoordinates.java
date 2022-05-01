@@ -94,7 +94,7 @@ public class ArtifactCoordinates implements Serializable {
     return concat(
         Stream.of(groupId.split("\\.")),
         Stream.of(artifactId, version, format("%s-%s.%s", artifactId, version, extension)))
-            .collect(joining("/", "/", ""));
+            .collect(joining("/"));
 
   }
 }

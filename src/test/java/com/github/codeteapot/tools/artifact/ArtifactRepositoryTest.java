@@ -1,15 +1,14 @@
 package com.github.codeteapot.tools.artifact;
 
+import static com.github.codeteapot.tools.artifact.TestUtil.validURL;
 import static java.nio.file.Files.write;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
-import com.github.codeteapot.tools.artifact.test.TestURLStreamHandler;
-import com.github.codeteapot.tools.artifact.test.UsingTestURLStreamHandlerException;
 import java.io.File;
-import java.net.URLStreamHandler;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 import javax.xml.bind.JAXBException;
@@ -22,32 +21,14 @@ public class ArtifactRepositoryTest {
   private static final String TEST_PROTOCOL = "file";
   private static final String TEST_HOST = "";
   private static final int TEST_PORT = -1;
-  private static final URLStreamHandler TEST_HANDLER = null;
 
-  private static final String ANY_PROTOCOL = "any";
-  private static final String ANY_HOST = "any";
-  private static final int ANY_PORT = 0;
-  private static final String ANY_PATH = "any";
-  private static final URLStreamHandler ANY_HANDLER = new TestURLStreamHandler("any");
+  private static final URL ANY_DIRECTORY = validURL("file:///any-directory");
 
-  private static final ArtifactCoordinates ANY_ARTIFACT_COORDINATES = new ArtifactCoordinates(
-      "any.group",
-      "any-artifact",
-      "any-version");
+  private static final URL SOME_DIRECTORY = validURL("file:///some-directory");
 
-  private static final String SOME_PROTOCOL = "some";
-  private static final String SOME_HOST = "some";
-  private static final int SOME_PORT = 1;
-  private static final String SOME_PATH = "some";
-  private static final URLStreamHandler SOME_HANDLER = new TestURLStreamHandler("some");
+  private static final int SOME_DIRECTORY_BASED_HASH_CODE = 491834430;
 
-  private static final int SOME_HOST_BASED_HASH_CODE = 3536116;
-
-  private static final String ANOTHER_PROTOCOL = "another";
-  private static final String ANOTHER_HOST = "another";
-  private static final int ANOTHER_PORT = 2;
-  private static final String ANOTHER_PATH = "another";
-  private static final URLStreamHandler ANOTHER_HANDLER = new TestURLStreamHandler("another");
+  private static final URL ANOTHER_DIRECTORY = validURL("file:///another-directory");
 
   private static final ArtifactCoordinates SOME_ARTIFACT_COORDINATES = new ArtifactCoordinates(
       "some.group",
@@ -76,30 +57,18 @@ public class ArtifactRepositoryTest {
       "some-runtime-dependency-artifact";
   private static final String SOME_RUNTIME_DEPENDENCY_VERSION = "some-runtime-dependency-version";
 
-  private static final URLStreamHandler CUSTOM_HANDLER = new TestURLStreamHandler("custom");
-
   @Test
-  public void hashCodeBasedOnHost() {
-    ArtifactRepository repository = new ArtifactRepository(
-        ANY_PROTOCOL,
-        SOME_HOST,
-        ANY_PORT,
-        ANY_PATH,
-        ANY_HANDLER);
+  public void hashCodeBasedOnDirectory() {
+    ArtifactRepository repository = new ArtifactRepository(SOME_DIRECTORY);
 
     int hashCode = repository.hashCode();
 
-    assertThat(hashCode).isEqualTo(SOME_HOST_BASED_HASH_CODE);
+    assertThat(hashCode).isEqualTo(SOME_DIRECTORY_BASED_HASH_CODE);
   }
 
   @Test
   public void equalByObjectReference() {
-    ArtifactRepository repository = new ArtifactRepository(
-        ANY_PROTOCOL,
-        ANY_HOST,
-        ANY_PORT,
-        ANY_PATH,
-        ANY_HANDLER);
+    ArtifactRepository repository = new ArtifactRepository(ANY_DIRECTORY);
     ArtifactRepository anotherRepository = repository;
 
     boolean equals = repository.equals(anotherRepository);
@@ -108,19 +77,9 @@ public class ArtifactRepositoryTest {
   }
 
   @Test
-  public void equalByObjectFields() {
-    ArtifactRepository repository = new ArtifactRepository(
-        SOME_PROTOCOL,
-        SOME_HOST,
-        SOME_PORT,
-        SOME_PATH,
-        SOME_HANDLER);
-    ArtifactRepository anotherRepository = new ArtifactRepository(
-        SOME_PROTOCOL,
-        SOME_HOST,
-        SOME_PORT,
-        SOME_PATH,
-        SOME_HANDLER);
+  public void equalByDirectory() {
+    ArtifactRepository repository = new ArtifactRepository(SOME_DIRECTORY);
+    ArtifactRepository anotherRepository = new ArtifactRepository(SOME_DIRECTORY);
 
     boolean equals = repository.equals(anotherRepository);
 
@@ -129,12 +88,7 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void notEqualByObjectType() {
-    ArtifactRepository repository = new ArtifactRepository(
-        ANY_PROTOCOL,
-        ANY_HOST,
-        ANY_PORT,
-        ANY_PATH,
-        ANY_HANDLER);
+    ArtifactRepository repository = new ArtifactRepository(ANY_DIRECTORY);
     Object anotherObject = new Object();
 
     boolean equals = repository.equals(anotherObject);
@@ -143,99 +97,9 @@ public class ArtifactRepositoryTest {
   }
 
   @Test
-  public void notEqualByProtocol() {
-    ArtifactRepository repository = new ArtifactRepository(
-        SOME_PROTOCOL,
-        SOME_HOST,
-        SOME_PORT,
-        SOME_PATH,
-        SOME_HANDLER);
-    ArtifactRepository anotherRepository = new ArtifactRepository(
-        ANOTHER_PROTOCOL,
-        SOME_HOST,
-        SOME_PORT,
-        SOME_PATH,
-        SOME_HANDLER);
-
-    boolean equals = repository.equals(anotherRepository);
-
-    assertThat(equals).isFalse();
-  }
-
-  @Test
-  public void notEqualByHost() {
-    ArtifactRepository repository = new ArtifactRepository(
-        SOME_PROTOCOL,
-        SOME_HOST,
-        SOME_PORT,
-        SOME_PATH,
-        SOME_HANDLER);
-    ArtifactRepository anotherRepository = new ArtifactRepository(
-        SOME_PROTOCOL,
-        ANOTHER_HOST,
-        SOME_PORT,
-        SOME_PATH,
-        SOME_HANDLER);
-
-    boolean equals = repository.equals(anotherRepository);
-
-    assertThat(equals).isFalse();
-  }
-
-  @Test
-  public void notEqualByPort() {
-    ArtifactRepository repository = new ArtifactRepository(
-        SOME_PROTOCOL,
-        SOME_HOST,
-        SOME_PORT,
-        SOME_PATH,
-        SOME_HANDLER);
-    ArtifactRepository anotherRepository = new ArtifactRepository(
-        SOME_PROTOCOL,
-        SOME_HOST,
-        ANOTHER_PORT,
-        SOME_PATH,
-        SOME_HANDLER);
-
-    boolean equals = repository.equals(anotherRepository);
-
-    assertThat(equals).isFalse();
-  }
-
-  @Test
-  public void notEqualByPath() {
-    ArtifactRepository repository = new ArtifactRepository(
-        SOME_PROTOCOL,
-        SOME_HOST,
-        SOME_PORT,
-        SOME_PATH,
-        SOME_HANDLER);
-    ArtifactRepository anotherRepository = new ArtifactRepository(
-        SOME_PROTOCOL,
-        SOME_HOST,
-        SOME_PORT,
-        ANOTHER_PATH,
-        SOME_HANDLER);
-
-    boolean equals = repository.equals(anotherRepository);
-
-    assertThat(equals).isFalse();
-  }
-
-  @Test
-  public void notEqualByHandler() {
-    ArtifactRepository repository = new ArtifactRepository(
-        SOME_PROTOCOL,
-        SOME_HOST,
-        SOME_PORT,
-        SOME_PATH,
-        SOME_HANDLER);
-    ArtifactRepository anotherRepository = new ArtifactRepository(
-        SOME_PROTOCOL,
-        SOME_HOST,
-        SOME_PORT,
-        SOME_PATH,
-        ANOTHER_HANDLER);
+  public void notEqualByDirectory() {
+    ArtifactRepository repository = new ArtifactRepository(SOME_DIRECTORY);
+    ArtifactRepository anotherRepository = new ArtifactRepository(ANOTHER_DIRECTORY);
 
     boolean equals = repository.equals(anotherRepository);
 
@@ -245,12 +109,7 @@ public class ArtifactRepositoryTest {
   @Test
   @Tag("integration")
   public void getExpectedScopeDependencies(@TempDir File someRepositoryDir) throws Exception {
-    ArtifactRepository repository = new ArtifactRepository(
-        TEST_PROTOCOL,
-        TEST_HOST,
-        TEST_PORT,
-        someRepositoryDir.getAbsolutePath(),
-        TEST_HANDLER);
+    ArtifactRepository repository = new ArtifactRepository(someRepositoryDir.toURI().toURL());
     File artifactDir = new File(
         someRepositoryDir.getAbsoluteFile(),
         SOME_ARTIFACT_SUBPATH);
@@ -302,12 +161,7 @@ public class ArtifactRepositoryTest {
   @Test
   @Tag("integration")
   public void getWithParentVersionOnDependency(@TempDir File someRepositoryDir) throws Exception {
-    ArtifactRepository repository = new ArtifactRepository(
-        TEST_PROTOCOL,
-        TEST_HOST,
-        TEST_PORT,
-        someRepositoryDir.getAbsolutePath(),
-        TEST_HANDLER);
+    ArtifactRepository repository = new ArtifactRepository(someRepositoryDir.toURI().toURL());
     File artifactDir = new File(
         someRepositoryDir.getAbsoluteFile(),
         SOME_ARTIFACT_SUBPATH);
@@ -337,29 +191,9 @@ public class ArtifactRepositoryTest {
 
   @Test
   @Tag("integration")
-  public void getUsingCustomHandler(@TempDir File someRepositoryDir) throws Exception {
-    ArtifactRepository repository = new ArtifactRepository(
-        TEST_PROTOCOL,
-        TEST_HOST,
-        TEST_PORT,
-        someRepositoryDir.getAbsolutePath(),
-        CUSTOM_HANDLER);
-
-    Throwable e = catchThrowable(() -> repository.get(ANY_ARTIFACT_COORDINATES));
-
-    assertThat(e).isInstanceOf(UsingTestURLStreamHandlerException.class);
-  }
-
-  @Test
-  @Tag("integration")
   public void failWhenDependencyVersionIsNotKnown(@TempDir File someRepositoryDir)
       throws Exception {
-    ArtifactRepository repository = new ArtifactRepository(
-        TEST_PROTOCOL,
-        TEST_HOST,
-        TEST_PORT,
-        someRepositoryDir.getAbsolutePath(),
-        TEST_HANDLER);
+    ArtifactRepository repository = new ArtifactRepository(someRepositoryDir.toURI().toURL());
     File artifactDir = new File(
         someRepositoryDir.getAbsoluteFile(),
         SOME_ARTIFACT_SUBPATH);
@@ -391,12 +225,7 @@ public class ArtifactRepositoryTest {
   @Test
   @Tag("integration")
   public void failWhenProjectFileIsInvalid(@TempDir File someRepositoryDir) throws Exception {
-    ArtifactRepository repository = new ArtifactRepository(
-        TEST_PROTOCOL,
-        TEST_HOST,
-        TEST_PORT,
-        someRepositoryDir.getAbsolutePath(),
-        TEST_HANDLER);
+    ArtifactRepository repository = new ArtifactRepository(someRepositoryDir.toURI().toURL());
     File artifactDir = new File(
         someRepositoryDir.getAbsoluteFile(),
         SOME_ARTIFACT_SUBPATH);
