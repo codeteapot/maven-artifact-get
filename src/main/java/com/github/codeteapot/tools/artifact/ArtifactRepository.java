@@ -1,5 +1,6 @@
 package com.github.codeteapot.tools.artifact;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toMap;
 import static javax.xml.bind.JAXBContext.newInstance;
@@ -12,7 +13,6 @@ import java.net.URL;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.stream.Stream;
 import javax.xml.bind.JAXBException;
 
@@ -27,8 +27,7 @@ public class ArtifactRepository {
       new SimpleEntry<>("ejb-client", "jar"),
       new SimpleEntry<>("war", "war"),
       new SimpleEntry<>("ear", "ear"),
-      new SimpleEntry<>("pom", "pom"))
-      .collect(toMap(Entry::getKey, Entry::getValue));
+      new SimpleEntry<>("pom", "pom")).collect(toMap(Entry::getKey, Entry::getValue));
 
   private static final String DEFAULT_EXTENSION = "jar";
 
@@ -40,7 +39,7 @@ public class ArtifactRepository {
    * @param directory Directory URL.
    */
   public ArtifactRepository(URL directory) {
-    this.directory = Objects.requireNonNull(directory);
+    this.directory = requireNonNull(directory);
   }
 
   /**
